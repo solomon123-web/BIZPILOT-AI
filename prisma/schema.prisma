@@ -1,0 +1,258 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String     @id @default(cuid())
+  email        String     @unique
+  name         String?
+  passwordHash String
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  businesses   Business[]
+}
+
+model Business {
+  id           String      @id @default(cuid())
+  name         String
+  slug         String      @unique
+  businessType String?     // Optional business type
+  country      String?     // Optional country
+  city         String?     // Optional city
+  description  String?     // Optional description
+  goals        String[]    @default([]) // Default goals array
+  ownerId      String
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  owner        User        @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  workspaces   Workspace[]
+  customers    Customer[]
+  invoices     Invoice[]
+  connectedSocialAccounts ConnectedSocialAccount[]
+  customerConversations   CustomerConversation[]
+  leads                   Lead[]
+  followUps               FollowUp[]
+  aIActions               AIAction[]
+  aIActionLogs            AIActionLog[]
+  aIPermissions           AIPermission[]
+  businessActivities      BusinessActivity[]
+  socialConnections       SocialConnection[]
+  oauthStates             OAuthState[]
+}
+
+model Workspace {
+  id         String   @id @default(cuid())
+  name       String
+  businessId String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  invoices   Invoice[]
+}
+
+model Customer {
+  id         String   @id @default(cuid())
+  name       String
+  email      String?  @unique
+  phone      String?
+  address    String?
+  notes      String?
+  businessId String
+  workspaceId String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  invoices   Invoice[]
+}
+
+model Invoice {
+  id          String   @id @default(cuid())
+  number      String   @unique
+  businessId  String
+  workspaceId String?
+  customerId  String?
+  status      String   @default("pending")
+  amount      Float    @default(0)
+  tax         Float    @default(0)
+  total       Float    @default(0)
+  issueDate   DateTime @default(now())
+  dueDate     DateTime?
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  business    Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  customer    Customer? @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  workspace   Workspace? @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  items       InvoiceItem[]
+}
+
+model InvoiceItem {
+  id        String  @id @default(cuid())
+  invoiceId String
+  description String
+  quantity  Int
+  unitPrice Float
+  taxRate   Float?  @default(0)
+
+  invoice   Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+}
+
+// AI Business Manager models
+model ConnectedSocialAccount {
+  id            String   @id @default(cuid())
+  businessId    String
+  provider      String
+  providerId    String
+  displayName   String?
+  metadata      Json?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  business      Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+}
+
+model CustomerConversation {
+  id              String   @id @default(cuid())
+  businessId      String
+  platform        String
+  externalId      String
+  externalUserId  String?
+  customerName    String?
+  lastMessageAt   DateTime?
+  metadata        Json?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  business        Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  messages        CustomerMessage[]
+}
+
+model CustomerMessage {
+  id                   String   @id @default(cuid())
+  conversationId       String
+  direction            String   // 'inbound' | 'outbound'
+  externalMessageId    String?
+  senderName           String?
+  content              String
+  metadata             Json?
+  createdAt            DateTime @default(now())
+
+  conversation         CustomerConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+}
+
+model Lead {
+  id          String   @id @default(cuid())
+  businessId  String
+  name        String?
+  email       String?
+  phone       String?
+  status      String   @default("NEW")
+  metadata    Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  business    Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+}
+
+model FollowUp {
+  id          String   @id @default(cuid())
+  businessId  String
+  leadId      String?
+  dueAt       DateTime?
+  note        String?
+  status      String   @default("PENDING")
+  metadata    Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  business    Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+}
+
+model AIAction {
+  id           String   @id @default(cuid())
+  businessId   String
+  actionType   String
+  parameters   Json
+  status       String   @default("PENDING")
+  requiresPermission Boolean @default(true)
+  result       Json?
+  error        String?
+  createdAt    DateTime @default(now())
+  executedAt   DateTime?
+
+  business     Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+}
+
+model AIActionLog {
+  id         String   @id @default(cuid())
+  actionId   String
+  businessId String
+  actor      String?
+  event      String
+  details    Json?
+  createdAt  DateTime @default(now())
+
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+}
+
+model AIPermission {
+  id          String   @id @default(cuid())
+  businessId  String
+  key         String
+  mode        String   @default("REQUIRE_APPROVAL") // SUGGEST | REQUIRE_APPROVAL | AUTOMATIC
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  business    Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+}
+
+model BusinessActivity {
+  id          String   @id @default(cuid())
+  businessId  String
+  type        String
+  metadata    Json?
+  createdAt   DateTime @default(now())
+
+  business    Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+}
+
+model SocialConnection {
+  id              String   @id @default(cuid())
+  businessId      String
+  workspaceId     String?
+  platform        String   // facebook, instagram, whatsapp, tiktok, linkedin, x, email
+  accountId       String   // platform-specific account/page ID
+  accountName     String?  // display name
+  accountType     String?  // page, profile, business_account
+  status          String   @default("connected") // connected, expired, disconnected, error, reconnect_required
+  accessTokenRef  String?  // reference to secure token storage (encrypted in production)
+  tokenExpiresAt  DateTime?
+  scopes          String[] @default([])
+  metadata        Json?    // platform-specific data
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  business        Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  oauthStates     OAuthState[]
+}
+
+model OAuthState {
+  id              String   @id @default(cuid())
+  state           String   @unique
+  connectionId    String?
+  businessId      String
+  platform        String
+  nonce           String
+  createdAt       DateTime @default(now())
+  expiresAt       DateTime
+
+  connection      SocialConnection? @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+  business        Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+}
