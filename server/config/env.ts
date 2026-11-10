@@ -26,10 +26,27 @@ const env = {
   // Many dev scripts (e.g. test-openai.js) use OPENAI_API_KEY, so allow that as a fallback.
   AI_API_KEY: readEnv('AI_API_KEY', process.env.OPENAI_API_KEY),
   OPENAI_API_KEY: readEnv('OPENAI_API_KEY', readEnv('AI_API_KEY')),
-  // Meta OAuth configuration
+  // Meta OAuth configuration.
   META_APP_ID: readEnv('META_APP_ID', ''),
   META_APP_SECRET: readEnv('META_APP_SECRET', ''),
   META_REDIRECT_URI: readEnv('META_REDIRECT_URI', 'http://localhost:5000/api/social/meta/callback'),
+  // WhatsApp Business Platform configuration.
+  WHATSAPP_VERIFY_TOKEN: readEnv('WHATSAPP_VERIFY_TOKEN', ''),
+  WHATSAPP_APP_SECRET: readEnv('WHATSAPP_APP_SECRET', ''),
+  WHATSAPP_ACCESS_TOKEN: readEnv('WHATSAPP_ACCESS_TOKEN', ''),
+  WHATSAPP_PHONE_NUMBER_ID: readEnv('WHATSAPP_PHONE_NUMBER_ID', ''),
+  WHATSAPP_BUSINESS_ACCOUNT_ID: readEnv('WHATSAPP_BUSINESS_ACCOUNT_ID', ''),
+  // Object storage abstraction configuration.
+  OBJECT_STORAGE_PROVIDER: readEnv('OBJECT_STORAGE_PROVIDER', 'local'),
+  OBJECT_STORAGE_BUCKET: readEnv('OBJECT_STORAGE_BUCKET', 'bizpilot-local-uploads'),
+  OBJECT_STORAGE_PUBLIC_BASE_URL: readEnv('OBJECT_STORAGE_PUBLIC_BASE_URL', 'http://localhost:5000/uploads'),
+  // Platform-specific config placeholders.
+  SHOPIFY_APP_KEY: readEnv('SHOPIFY_APP_KEY', ''),
+  SHOPIFY_APP_SECRET: readEnv('SHOPIFY_APP_SECRET', ''),
+  SHOPIFY_REDIRECT_URI: readEnv('SHOPIFY_REDIRECT_URI', 'http://localhost:5000/api/shopify/oauth/callback'),
+  TIKTOK_CLIENT_KEY: readEnv('TIKTOK_CLIENT_KEY', ''),
+  TIKTOK_CLIENT_SECRET: readEnv('TIKTOK_CLIENT_SECRET', ''),
+  TIKTOK_REDIRECT_URI: readEnv('TIKTOK_REDIRECT_URI', 'http://localhost:5000/api/tiktok/oauth/callback'),
 };
 
 // Ensure Prisma (which reads process.env at runtime) can access DATABASE_URL

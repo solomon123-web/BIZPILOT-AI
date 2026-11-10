@@ -11,16 +11,19 @@
     "start": "node dist/server.js",
     "start:server": "node dist/server.js",
     "preview": "vite preview --host",
-    "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.server.json"
+    "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.server.json",
+    "test": "tsx --test tests/**/*.test.js"
   },
   "dependencies": {
     "@prisma/client": "^6.1.0",
+    "@types/multer": "^2.3.0",
     "bcryptjs": "^3.0.0",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
     "jsonwebtoken": "^9.0.2",
     "lucide-react": "^0.542.0",
+    "multer": "^2.5.0",
     "node-fetch": "^3.3.2",
     "openai": "^7.10.0",
     "prisma": "^6.1.0",

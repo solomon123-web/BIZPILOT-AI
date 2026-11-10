@@ -7,6 +7,7 @@ export type BusinessGoal =
   | 'Increase sales';
 
 export interface BusinessProfile {
+  id?: string;
   businessName: string;
   businessType: string;
   country: string;

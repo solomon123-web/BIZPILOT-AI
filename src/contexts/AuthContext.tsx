@@ -48,8 +48,13 @@ export function AuthProvider({
   const hydrateUserProfile = async (authenticatedUser: User) => {
     if (!authenticatedUser) {
       setWorkspaceBusiness(null);
+      sessionStorage.removeItem('demoMode');
+      sessionStorage.removeItem('demoData');
       return;
     }
+
+    sessionStorage.removeItem('demoMode');
+    sessionStorage.removeItem('demoData');
 
     setWorkspaceUser({
       name: authenticatedUser.name ?? '',

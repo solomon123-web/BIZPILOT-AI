@@ -24,6 +24,7 @@ export function mapBusinessToProfile(
   }
 
   return {
+    id: business.id ?? undefined,
     businessName: business.name ?? '',
     businessType: business.businessType ?? '',
     country: business.country ?? '',

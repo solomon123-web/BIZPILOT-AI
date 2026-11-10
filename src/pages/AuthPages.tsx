@@ -175,7 +175,9 @@ export function DemoPage() {
   const navigate = useNavigate();
 
   const handleEnterDemo = () => {
-    // Load demo data into workspace context
+    sessionStorage.removeItem('demoMode');
+    sessionStorage.removeItem('demoData');
+
     const demoData = {
       business: {
         businessName: 'Amaka Cakes',
@@ -191,11 +193,8 @@ export function DemoPage() {
       },
     };
 
-    // Store demo data in session storage
     sessionStorage.setItem('demoMode', 'true');
     sessionStorage.setItem('demoData', JSON.stringify(demoData));
-
-    // Navigate to app
     navigate('/app');
   };
 
@@ -203,8 +202,8 @@ export function DemoPage() {
     <div className="demo-page-container">
       <div className="demo-banner">
         <div className="demo-banner__content">
-          <span className="caption">✨ Demo Mode</span>
-          <p className="small">Explore BizPilotAI with our sample workspace</p>
+          <span className="caption">✨ Demo Mode (isolated sample workspace)</span>
+          <p className="small">This demo is kept separate from real business accounts and data.</p>
         </div>
         <Button
           variant="primary"

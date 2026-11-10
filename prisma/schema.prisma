@@ -31,6 +31,10 @@ model Business {
   updatedAt    DateTime    @updatedAt
   owner        User        @relation(fields: [ownerId], references: [id], onDelete: Cascade)
   workspaces   Workspace[]
+  products     Product[]
+  productMedia ProductMedia[]
+  productListings ProductListing[]
+  publishingJobs PublishingJob[]
   customers    Customer[]
   invoices     Invoice[]
   connectedSocialAccounts ConnectedSocialAccount[]
@@ -45,6 +49,109 @@ model Business {
   oauthStates             OAuthState[]
 }
 
+model Product {
+  id                String   @id @default(cuid())
+  businessId        String
+  workspaceId       String?
+  name              String
+  type              String   @default("product")
+  description       String?
+  price             Float    @default(0)
+  currency          String   @default("USD")
+  status            String   @default("draft")
+  category          String?
+  imageUrl          String?
+  availability      String?  @default("in_stock")
+  isPublished       Boolean  @default(false)
+  publishedAt       DateTime?
+  stockQuantity     Int?     @default(0)
+  sku               String?
+  businessLocation  String?
+  deliveryInfo      String?
+  productVariations Json?
+  slug              String   @unique
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  business          Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  workspace         Workspace? @relation(fields: [workspaceId], references: [id], onDelete: SetNull)
+  media             ProductMedia[]
+  listings          ProductListing[]
+  publishingJobs    PublishingJob[]
+}
+
+model ProductMedia {
+  id          String   @id @default(cuid())
+  productId   String
+  businessId  String
+  type        String   @default("image") // image | video
+  url         String
+  provider    String   @default("local")
+  fileName    String?
+  mimeType    String?
+  sizeBytes   Int?
+  isPrimary   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  product     Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  business    Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+  @@index([businessId])
+}
+
+model ProductListing {
+  id              String   @id @default(cuid())
+  productId       String
+  businessId      String
+  channel         String
+  status          String   @default("DRAFT")
+  listingUrl      String?
+  externalId      String?
+  content         Json?
+  publishedAt     DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  product         Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  business        Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@unique([productId, channel])
+  @@index([businessId])
+}
+
+model PublishingJob {
+  id              String   @id @default(cuid())
+  productId       String
+  businessId      String
+  channel         String
+  status          String   @default("QUEUED")
+  payload         Json?
+  result          Json?
+  errorMessage    String?
+  retryCount      Int      @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  product         Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  business        Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  attempts        PublishingAttempt[]
+
+  @@index([productId])
+  @@index([businessId])
+}
+
+model PublishingAttempt {
+  id              String   @id @default(cuid())
+  jobId           String
+  status          String   @default("QUEUED")
+  responseBody    Json?
+  errorMessage    String?
+  createdAt       DateTime @default(now())
+
+  publishingJob   PublishingJob @relation(fields: [jobId], references: [id], onDelete: Cascade)
+}
+
 model Workspace {
   id         String   @id @default(cuid())
   name       String
@@ -53,6 +160,7 @@ model Workspace {
   updatedAt  DateTime @updatedAt
   business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
   invoices   Invoice[]
+  products   Product[]
 }
 
 model Customer {

@@ -1,3 +1,4 @@
+import path from 'path';
 import cors from 'cors';
 import express, { type NextFunction, type Request, type Response } from 'express';
 import env from './config/env.js';
@@ -23,6 +24,7 @@ app.use(
 );
 
 app.use(express.json({ limit: '1mb' }));
+app.use('/uploads', express.static(path.resolve(process.cwd(), 'uploads')));
 
 app.use((req: Request, _res: Response, next: NextFunction) => {
   console.log(`${new Date().toISOString()} ${req.method} ${req.originalUrl}`);

@@ -12,10 +12,14 @@ import {
   WebsiteBuilderPage,
   CustomerRepliesPage,
   CustomersPage,
+  LeadsPageRoute,
+  ProductsPageRoute,
+  OnlinePresencePageRoute,
   InvoicesPage,
   AnalyticsPage,
   SettingsPage,
 } from './pages/app/AppPages';
+import { PublicProductPage } from './pages/PublicProductPage';
 import { useAuth } from './contexts/AuthContext';
 import { useWorkspace } from './contexts/WorkspaceContext';
 
@@ -72,6 +76,8 @@ export default function App() {
         <Route path="/onboarding" element={<OnboardingGate />} />
       </Route>
 
+      <Route path="/p/:slug" element={<PublicProductPage />} />
+
       <Route
         element={
           <ProtectedRoute>
@@ -86,6 +92,9 @@ export default function App() {
         <Route path="/app/website-builder" element={<WebsiteBuilderPage />} />
         <Route path="/app/customer-replies" element={<CustomerRepliesPage />} />
         <Route path="/app/customers" element={<CustomersPage />} />
+        <Route path="/app/leads" element={<LeadsPageRoute />} />
+        <Route path="/app/products" element={<ProductsPageRoute />} />
+        <Route path="/app/online-presence" element={<OnlinePresencePageRoute />} />
         <Route path="/app/invoices" element={<InvoicesPage />} />
         <Route path="/app/analytics" element={<AnalyticsPage />} />
         <Route path="/app/settings" element={<SettingsPage />} />

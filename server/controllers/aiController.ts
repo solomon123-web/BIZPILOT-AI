@@ -3,6 +3,8 @@ import { z } from 'zod';
 import OpenAI from 'openai';
 import env from '../config/env.js';
 import https from 'https';
+import { prisma } from '../config/prisma.js';
+import businessService from '../services/businessService.js';
 // `node-fetch` is used at runtime to supply a fetch that can accept an https.Agent forcing IPv4.
 // @ts-ignore - runtime-only import; types are not required here and `skipLibCheck` is enabled.
 import fetch from 'node-fetch';
@@ -42,6 +44,7 @@ const buildPrompt = (
   userMessage: string,
   business: Partial<ChatRequest> | undefined,
   history?: { role: 'user' | 'assistant'; content: string }[],
+  productSummary?: string,
 ): string => {
   let systemInstruction = `You are BizPilotAI, an intelligent general-purpose AI business assistant.\n\nYour primary purpose is to help business owners and users think, learn, create, plan, analyze, write, research, solve problems, and make better decisions. You can answer general knowledge questions as well as business-related questions. Provide practical, clear, actionable answers when the question is business-related. When you do not know something, be honest about uncertainty rather than inventing facts. Be conversational, helpful, clear, and professional.`;
 
@@ -54,6 +57,10 @@ const buildPrompt = (
       systemInstruction += `\n- Location: ${location}`;
     }
     systemInstruction += `\n\nUse this context to provide personalized, relevant advice when appropriate. Do not restrict answering general questions because they are outside the business domain.`;
+  }
+
+  if (productSummary) {
+    systemInstruction += `\n\nAuthenticated Business Product Context:\n${productSummary}`;
   }
 
   let prompt = systemInstruction + '\n\n';
@@ -73,16 +80,81 @@ const buildPrompt = (
   return prompt;
 };
 
+const getAuthenticatedBusinessContext = async (req: Request) => {
+  const userId = (req as any).user?.id;
+  if (!userId) {
+    return { business: null, products: [] as any[] };
+  }
+
+  const businesses = await businessService.getBusinessesByOwner(userId);
+  const business = businesses[0] ?? null;
+
+  if (!business) {
+    return { business: null, products: [] as any[] };
+  }
+
+  const products = await prisma.product.findMany({
+    where: { businessId: business.id },
+    orderBy: { createdAt: 'desc' },
+  });
+
+  return { business, products };
+};
+
+export const getBusinessContext = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const userId = (req as any).user?.id;
+    if (!userId) {
+      return res.status(401).json({ success: false, message: 'Authentication required.' });
+    }
+
+    const { business, products } = await getAuthenticatedBusinessContext(req);
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        business,
+        products,
+        summary: business
+          ? `Business: ${business.name}. ${products.length} products/services recorded.`
+          : 'No business assigned to this user yet.',
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const chat = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const parsed = chatSchema.parse(req.body);
+    const { business, products } = await getAuthenticatedBusinessContext(req);
 
     const history = parsed.messages?.map((m) => ({ role: m.role as 'user' | 'assistant', content: m.content })) ?? undefined;
 
-    const prompt = buildPrompt(parsed.message, parsed, history);
+    const productSummary = products.length > 0
+      ? products
+          .map((product) => `${product.name} (${product.type}, ${product.status}, ${product.currency} ${Number(product.price ?? 0).toFixed(2)})`)
+          .join('; ')
+      : 'No products or services are currently attached to this business.';
+
+    const prompt = buildPrompt(parsed.message, {
+      ...parsed,
+      businessName: parsed.businessName ?? business?.name,
+      businessType: parsed.businessType ?? undefined,
+      city: parsed.city ?? undefined,
+      country: parsed.country ?? undefined,
+    }, history, productSummary);
+
+    if (!env.AI_API_KEY || !env.AI_API_KEY.trim()) {
+      return res.status(503).json({
+        success: false,
+        message: 'AI service is unavailable. No API key is configured.',
+      });
+    }
 
     const response = await client.responses.create({
-      model: 'gpt-5.6-luna',
+      model: 'gpt-4o-mini',
       input: prompt,
     });
 
@@ -102,8 +174,6 @@ export const chat = async (req: Request, res: Response, next: NextFunction) => {
 
     if (error instanceof Error) {
       console.error('OpenAI Error:', error.message);
-      // Log full error for debugging (network issues, API errors)
-      // This will not expose secrets to the client.
       console.error('OpenAI Full Error:', error);
       return res.status(500).json({
         success: false,
@@ -117,4 +187,5 @@ export const chat = async (req: Request, res: Response, next: NextFunction) => {
 
 export default {
   chat,
+  getBusinessContext,
 };

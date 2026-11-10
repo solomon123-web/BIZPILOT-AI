@@ -15,6 +15,9 @@ import conversationsRoutes from './conversations.js';
 import leadsRoutes from './leads.js';
 import followUpsRoutes from './followUps.js';
 import activityRoutes from './activity.js';
+import auditRoutes from './audit.js';
+import productRoutes from './products.js';
+import publicRoutes from './public.js';
 
 const router = Router();
 
@@ -34,5 +37,8 @@ router.use('/conversations', conversationsRoutes);
 router.use('/leads', leadsRoutes);
 router.use('/follow-ups', followUpsRoutes);
 router.use('/activity', activityRoutes);
+router.use('/audit', auditRoutes);
+router.use('/products', productRoutes);
+router.use('/public', publicRoutes);
 
 export default router;

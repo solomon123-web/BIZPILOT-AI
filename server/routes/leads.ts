@@ -7,5 +7,7 @@ router.use(authMiddleware as any);
 
 router.post('/', leadController.createLead);
 router.get('/', leadController.listLeads);
+router.patch('/:id', leadController.updateLead);
+router.delete('/:id', leadController.deleteLead);
 
 export default router;
